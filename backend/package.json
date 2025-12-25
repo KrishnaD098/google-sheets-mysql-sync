@@ -1,0 +1,14 @@
+{
+  "name": "backend",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2",
+    "googleapis": "^144.0.0",
+    "mysql2": "^3.11.0",
+    "node-cron": "^3.0.3"
+  }
+}
