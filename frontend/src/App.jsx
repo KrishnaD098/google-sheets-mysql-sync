@@ -4,43 +4,113 @@ import "./App.css";
 const API_BASE =
     import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
-function App() {
-    const [mysqlRows, setMysqlRows] = useState([]);
-    const [sheetRows, setSheetRows] = useState([]);
+const GOOGLE_SHEET_URL =
+    "https://docs.google.com/spreadsheets/d/1sx6TBw5eksnRQ7ln4l2lZbT9-xSp7nq40xWpCXWPs38";
 
-    const loadMySQL = async () => {
+export default function App() {
+    const [status, setStatus] = useState(null);
+    const [mysqlRows, setMysqlRows] = useState([]);
+    const [sheetData, setSheetData] = useState(null);
+
+    const fetchStatus = async () => {
+        const res = await fetch(`${API_BASE}/status`);
+        setStatus(await res.json());
+    };
+
+    // 🔥 SINGLE SYNC ACTION
+    const syncNow = async () => {
+        await fetch(`${API_BASE}/sync-both`, {
+            method: "POST",
+        });
+
+        // refresh data after sync
+        fetchMysqlRows();
+        fetchSheetRows();
+    };
+
+    const fetchMysqlRows = async () => {
         const res = await fetch(`${API_BASE}/rows/latest`);
         setMysqlRows(await res.json());
     };
 
-    const loadSheets = async () => {
+    const fetchSheetRows = async () => {
         const res = await fetch(`${API_BASE}/sheets/latest`);
-        setSheetRows(await res.json());
+        setSheetData(await res.json());
     };
 
     return (
-        <div>
+        <div className="container">
             <h1>MySQL ↔ Google Sheets Sync Dashboard</h1>
+            <p className="subtitle">Live two-way synchronization demo</p>
 
-            <button onClick={() => fetch(`${API_BASE}/sync-now`, { method: "POST" })}>
-                Sync Sheets → MySQL
-            </button>
+            {/* STATUS */}
+            <div className="card status-card">
+                <h2>System Status</h2>
 
-            <button
-                onClick={() =>
-                    fetch(`${API_BASE}/sync-mysql-to-sheets`, { method: "POST" })
-                }
-            >
-                Sync MySQL → Sheets
-            </button>
+                <button onClick={fetchStatus}>Check Status</button>
 
-            <button onClick={loadMySQL}>Show MySQL</button>
-            <button onClick={loadSheets}>Show Sheets</button>
+                {status && (
+                    <div className="status-row">
+            <span className={status.mysql ? "badge green" : "badge red"}>
+              MySQL {status.mysql ? "Connected" : "Disconnected"}
+            </span>
+                        <span
+                            className={
+                                status.googleSheets ? "badge green" : "badge red"
+                            }
+                        >
+              Google Sheets{" "}
+                            {status.googleSheets ? "Connected" : "Disconnected"}
+            </span>
+                    </div>
+                )}
+            </div>
 
-            <pre>{JSON.stringify(mysqlRows, null, 2)}</pre>
-            <pre>{JSON.stringify(sheetRows, null, 2)}</pre>
+            {/* ACTIONS */}
+            <div className="card actions-card">
+                <h2>Actions</h2>
+
+                <div className="action-row">
+                    <button onClick={syncNow}>Sync Now</button>
+
+                    <a
+                        href={GOOGLE_SHEET_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link-btn"
+                    >
+                        Open Google Sheet ↗
+                    </a>
+                </div>
+            </div>
+
+            {/* MYSQL DATA */}
+            <div className="card mysql-card">
+                <h2>MySQL Data (Source of Truth)</h2>
+
+                <button onClick={fetchMysqlRows}>
+                    Show Latest 10 Rows
+                </button>
+
+                <pre className="code">
+          {JSON.stringify(mysqlRows, null, 2)}
+        </pre>
+            </div>
+
+            {/* GOOGLE SHEETS DATA */}
+            <div className="card sheets-card">
+                <h2>Google Sheets Data (Synced View)</h2>
+
+                <button onClick={fetchSheetRows}>
+                    Show Latest 10 Rows from Sheet
+                </button>
+
+                {sheetData && (
+                    <pre className="code">
+            {JSON.stringify(sheetData, null, 2)}
+          </pre>
+                )}
+            </div>
         </div>
     );
 }
-
-export default App;

@@ -94,6 +94,24 @@ app.post("/sync-mysql-to-sheets", async (req, res) => {
 });
 
 /**
+ * 🔁 FULL TWO-WAY SYNC (Sheets → MySQL → Sheets)
+ */
+app.post("/sync-both", async (req, res) => {
+    try {
+        // 1️⃣ Google Sheets → MySQL
+        await sync();
+
+        // 2️⃣ MySQL → Google Sheets
+        await mysqlToSheetsSync();
+
+        res.json({ status: "Two-way sync completed" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
  * Auto Sheets → MySQL (every 10s)
  */
 cron.schedule("*/10 * * * * *", async () => {
