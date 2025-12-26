@@ -5,8 +5,8 @@ const cors = require("cors");
 const cron = require("node-cron");
 
 const db = require("./db");
-const sync = require("./sync"); // Google Sheets -> MySQL
-const mysqlToSheetsSync = require("./mysqlToSheets"); // MySQL -> Google Sheets
+const sync = require("./sync"); // Sheets → MySQL
+const mysqlToSheetsSync = require("./mysqlToSheets"); // MySQL → Sheets
 const { sheets, SHEET_ID } = require("./sheets");
 
 const app = express();
@@ -34,9 +34,7 @@ app.get("/status", async (req, res) => {
 
     if (sheets && SHEET_ID) {
         try {
-            await sheets.spreadsheets.get({
-                spreadsheetId: SHEET_ID,
-            });
+            await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
             googleSheets = true;
         } catch {}
     }
@@ -45,7 +43,7 @@ app.get("/status", async (req, res) => {
 });
 
 /**
- * Latest MySQL rows (preview)
+ * Latest MySQL rows
  */
 app.get("/rows/latest", async (req, res) => {
     const [rows] = await db
@@ -56,7 +54,7 @@ app.get("/rows/latest", async (req, res) => {
 });
 
 /**
- * Latest Google Sheets rows (preview)
+ * Latest Google Sheets rows
  */
 app.get("/sheets/latest", async (req, res) => {
     const response = await sheets.spreadsheets.values.get({
@@ -72,59 +70,55 @@ app.get("/sheets/latest", async (req, res) => {
 });
 
 /**
- * 🔥 MANUAL SYNC: Google Sheets -> MySQL
+ * Sheets → MySQL (manual)
  */
 app.post("/sync-now", async (req, res) => {
     try {
         await sync();
-        res.json({ status: "Google Sheets synced to MySQL" });
+        res.json({ status: "Sheets synced to MySQL" });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
 /**
- * 🔁 MANUAL SYNC: MySQL -> Google Sheets
+ * MySQL → Sheets (manual)
  */
 app.post("/sync-mysql-to-sheets", async (req, res) => {
     try {
         await mysqlToSheetsSync();
         res.json({ status: "MySQL synced to Google Sheets" });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
 /**
- * ⏱️ Auto sync: Google Sheets -> MySQL (every 10 seconds)
- * Demo-friendly
+ * Auto Sheets → MySQL (every 10s)
  */
 cron.schedule("*/10 * * * * *", async () => {
-    console.log("⏱️ Auto sync (Sheets → MySQL)");
     try {
         await sync();
+        console.log("⏱️ Auto sync: Sheets → MySQL");
     } catch (err) {
-        console.error("Auto sync failed:", err.message);
+        console.error(err.message);
     }
 });
 
 /**
- * ⏱️ Optional Auto sync: MySQL -> Google Sheets (every 30 seconds)
- * Uncomment if needed
+ * Auto MySQL → Sheets (every 20s)
+ * 🔥 THIS FIXES YOUR PRODUCTION ISSUE
  */
-// cron.schedule("*/30 * * * * *", async () => {
-//     console.log("⏱️ Auto sync (MySQL → Sheets)");
-//     try {
-//         await mysqlToSheetsSync();
-//     } catch (err) {
-//         console.error("MySQL → Sheets auto sync failed:", err.message);
-//     }
-// });
+cron.schedule("*/20 * * * * *", async () => {
+    try {
+        await mysqlToSheetsSync();
+        console.log("⏱️ Auto sync: MySQL → Sheets");
+    } catch (err) {
+        console.error(err.message);
+    }
+});
 
 const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-    console.log(`🚀 Backend running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+    console.log(`🚀 Backend running on port ${PORT}`)
+);

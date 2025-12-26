@@ -4,29 +4,24 @@ const { sheets, SHEET_ID } = require("./sheets");
 const SHEET_NAME = "Sheet1";
 
 async function mysqlToSheetsSync() {
-    // 1️⃣ Fetch rows from MySQL
     const [rows] = await db
         .promise()
         .query("SELECT id, data FROM sheet_rows ORDER BY id ASC");
 
-    if (!rows.length) {
-        console.log("No rows found in MySQL to sync");
-        return;
-    }
+    if (!rows.length) return;
 
-    // 2️⃣ Convert MySQL JSON → Sheet rows
     const values = rows.map((row) => {
-        const parsed = row.data; // ✅ ALREADY an object
-        return [row.id, ...Object.values(parsed)];
+        const data = row.data; // already an object
+        return [row.id, ...Object.values(data)];
     });
 
-    // 3️⃣ Clear existing rows (keep header)
+    // clear old rows
     await sheets.spreadsheets.values.clear({
         spreadsheetId: SHEET_ID,
         range: `${SHEET_NAME}!A2:Z`,
     });
 
-    // 4️⃣ Push updated rows to Google Sheets
+    // write updated rows
     await sheets.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,
         range: `${SHEET_NAME}!A2`,
@@ -34,7 +29,7 @@ async function mysqlToSheetsSync() {
         requestBody: { values },
     });
 
-    console.log("⬆️ MySQL → Google Sheets sync completed");
+    console.log("⬆️ MySQL → Google Sheets synced");
 }
 
 module.exports = mysqlToSheetsSync;
