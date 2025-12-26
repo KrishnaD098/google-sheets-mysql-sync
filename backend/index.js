@@ -5,7 +5,8 @@ const cors = require("cors");
 const cron = require("node-cron");
 
 const db = require("./db");
-const sync = require("./sync");
+const sync = require("./sync"); // Google Sheets -> MySQL
+const mysqlToSheetsSync = require("./mysqlToSheets"); // MySQL -> Google Sheets
 const { sheets, SHEET_ID } = require("./sheets");
 
 const app = express();
@@ -50,6 +51,7 @@ app.get("/rows/latest", async (req, res) => {
     const [rows] = await db
         .promise()
         .query("SELECT * FROM sheet_rows ORDER BY id ASC");
+
     res.json(rows.slice(-10));
 });
 
@@ -70,27 +72,59 @@ app.get("/sheets/latest", async (req, res) => {
 });
 
 /**
- * 🔥 MANUAL SYNC ENDPOINT (THIS FIXES 404)
+ * 🔥 MANUAL SYNC: Google Sheets -> MySQL
  */
 app.post("/sync-now", async (req, res) => {
     try {
         await sync();
-        res.json({ status: "Synced successfully" });
+        res.json({ status: "Google Sheets synced to MySQL" });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
 /**
- * Auto sync every 10 seconds (demo-friendly)
+ * 🔁 MANUAL SYNC: MySQL -> Google Sheets
+ */
+app.post("/sync-mysql-to-sheets", async (req, res) => {
+    try {
+        await mysqlToSheetsSync();
+        res.json({ status: "MySQL synced to Google Sheets" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * ⏱️ Auto sync: Google Sheets -> MySQL (every 10 seconds)
+ * Demo-friendly
  */
 cron.schedule("*/10 * * * * *", async () => {
-    console.log("⏱️ Auto sync triggered");
-    await sync();
+    console.log("⏱️ Auto sync (Sheets → MySQL)");
+    try {
+        await sync();
+    } catch (err) {
+        console.error("Auto sync failed:", err.message);
+    }
 });
+
+/**
+ * ⏱️ Optional Auto sync: MySQL -> Google Sheets (every 30 seconds)
+ * Uncomment if needed
+ */
+// cron.schedule("*/30 * * * * *", async () => {
+//     console.log("⏱️ Auto sync (MySQL → Sheets)");
+//     try {
+//         await mysqlToSheetsSync();
+//     } catch (err) {
+//         console.error("MySQL → Sheets auto sync failed:", err.message);
+//     }
+// });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log("Backend running on port 5000");
+    console.log(`🚀 Backend running on port ${PORT}`);
 });
