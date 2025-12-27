@@ -57,16 +57,31 @@ app.get("/rows/latest", async (req, res) => {
  * Latest Google Sheets rows
  */
 app.get("/sheets/latest", async (req, res) => {
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SHEET_ID,
-        range: "Sheet1",
-    });
+    try {
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SHEET_ID,
+            range: "Sheet1",
+        });
 
-    const values = response.data.values || [];
-    const header = values[0] || [];
-    const rows = values.slice(1).slice(-10);
+        const values = response.data.values || [];
+        const header = values[0] || [];
+        const rawRows = values.slice(1); // All rows after header
+        const latest10RawRows = rawRows.slice(-10); // Last 10 rows
 
-    res.json({ header, rows });
+        // Transform raw rows into an array of objects
+        const rows = latest10RawRows.map(row => {
+            const rowObject = {};
+            header.forEach((h, i) => {
+                rowObject[h] = row[i];
+            });
+            return rowObject;
+        });
+
+        res.json(rows); // Send only the transformed rows
+    } catch (err) {
+        console.error("Error fetching Google Sheets data:", err);
+        res.status(500).json({ error: "Failed to fetch Google Sheets data" });
+    }
 });
 
 /**

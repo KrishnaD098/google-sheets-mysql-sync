@@ -167,6 +167,58 @@ button:hover {
     font-family: "Fira Code", monospace;
 }
 
+.synced-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ecfdf5;
+    color: #065f46;
+    padding: 20px 40px;
+    border-radius: 10px;
+    border: 1px solid #d1fae5;
+    z-index: 100;
+    font-size: 2rem;
+}
+
+.table-container {
+    margin-top: 18px;
+    max-height: 500px;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+}
+
+.data-table td {
+    font-size: 14px;
+    color: #374151;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .container {

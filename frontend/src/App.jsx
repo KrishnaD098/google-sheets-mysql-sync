@@ -1,5 +1,6 @@
-﻿import { useState } from "react";
+﻿import {useEffect, useState} from "react";
 import "./App.css";
+import DataTable from "./DataTable";
 
 const API_BASE =
     import.meta.env.VITE_API_BASE || "http://localhost:5000";
@@ -10,7 +11,9 @@ const GOOGLE_SHEET_URL =
 export default function App() {
     const [status, setStatus] = useState(null);
     const [mysqlRows, setMysqlRows] = useState([]);
-    const [sheetData, setSheetData] = useState(null);
+    const [sheetData, setSheetData] = useState([]);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [showSyncedMessage, setShowSyncedMessage] = useState(false);
 
     const fetchStatus = async () => {
         const res = await fetch(`${API_BASE}/status`);
@@ -19,6 +22,7 @@ export default function App() {
 
     // 🔥 SINGLE SYNC ACTION
     const syncNow = async () => {
+        setIsSyncing(true);
         await fetch(`${API_BASE}/sync-both`, {
             method: "POST",
         });
@@ -26,7 +30,18 @@ export default function App() {
         // refresh data after sync
         fetchMysqlRows();
         fetchSheetRows();
+        setIsSyncing(false);
+        setShowSyncedMessage(true);
     };
+
+    useEffect(() => {
+        if (showSyncedMessage) {
+            const timer = setTimeout(() => {
+                setShowSyncedMessage(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showSyncedMessage]);
 
     const fetchMysqlRows = async () => {
         const res = await fetch(`${API_BASE}/rows/latest`);
@@ -34,12 +49,15 @@ export default function App() {
     };
 
     const fetchSheetRows = async () => {
-        const res = await fetch(`${API_BASE}/sheets/latest`);
-        setSheetData(await res.json());
-    };
+    const res = await fetch(`${API_BASE}/sheets/latest`);
+    const data = await res.json();
+    console.log('Sheet data:', data);
+    setSheetData(data);
+};
 
     return (
         <div className="container">
+            {showSyncedMessage && <div className="synced-message">Synced!</div>}
             <h1>MySQL ↔ Google Sheets Sync Dashboard</h1>
             <p className="subtitle">Live two-way synchronization demo</p>
 
@@ -71,7 +89,9 @@ export default function App() {
                 <h2>Actions</h2>
 
                 <div className="action-row">
-                    <button onClick={syncNow}>Sync Now</button>
+                    <button onClick={syncNow} disabled={isSyncing}>
+                        {isSyncing ? "Syncing..." : "Sync Now"}
+                    </button>
 
                     <a
                         href={GOOGLE_SHEET_URL}
@@ -92,9 +112,7 @@ export default function App() {
                     Show Latest 10 Rows
                 </button>
 
-                <pre className="code">
-          {JSON.stringify(mysqlRows, null, 2)}
-        </pre>
+                <DataTable data={mysqlRows} />
             </div>
 
             {/* GOOGLE SHEETS DATA */}
@@ -105,11 +123,7 @@ export default function App() {
                     Show Latest 10 Rows from Sheet
                 </button>
 
-                {sheetData && (
-                    <pre className="code">
-            {JSON.stringify(sheetData, null, 2)}
-          </pre>
-                )}
+                <DataTable data={sheetData} />
             </div>
         </div>
     );
