@@ -114,27 +114,27 @@ app.post("/sync-both", async (req, res) => {
 /**
  * Auto Sheets → MySQL (every 10s)
  */
-cron.schedule("*/10 * * * * *", async () => {
-    try {
-        await sync();
-        console.log("⏱️ Auto sync: Sheets → MySQL");
-    } catch (err) {
-        console.error(err.message);
-    }
-});
-
-/**
- * Auto MySQL → Sheets (every 20s)
- * 🔥 THIS FIXES YOUR PRODUCTION ISSUE
- */
-cron.schedule("*/20 * * * * *", async () => {
-    try {
-        await mysqlToSheetsSync();
-        console.log("⏱️ Auto sync: MySQL → Sheets");
-    } catch (err) {
-        console.error(err.message);
-    }
-});
+// cron.schedule("*/10 * * * * *", async () => {
+//     try {
+//         await sync();
+//         console.log("⏱️ Auto sync: Sheets → MySQL");
+//     } catch (err) {
+//         console.error(err.message);
+//     }
+// });
+//
+// /**
+//  * Auto MySQL → Sheets (every 20s)
+//  * 🔥 THIS FIXES YOUR PRODUCTION ISSUE
+//  */
+// cron.schedule("*/20 * * * * *", async () => {
+//     try {
+//         await mysqlToSheetsSync();
+//         console.log("⏱️ Auto sync: MySQL → Sheets");
+//     } catch (err) {
+//         console.error(err.message);
+//     }
+// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
