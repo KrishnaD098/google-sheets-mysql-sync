@@ -11,7 +11,7 @@ async function mysqlToSheetsSync() {
     if (!rows.length) return;
 
     const values = rows.map((row) => {
-        const data = JSON.parse(row.data); // Explicitly parse the JSON string
+        const data = row.data;
         return [row.id, ...Object.values(data)];
     });
 
