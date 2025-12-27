@@ -127,14 +127,14 @@ cron.schedule("*/10 * * * * *", async () => {
  * Auto MySQL → Sheets (every 20s)
  * 🔥 THIS FIXES YOUR PRODUCTION ISSUE
  */
-cron.schedule("*/20 * * * * *", async () => {
-    try {
-        await mysqlToSheetsSync();
-        console.log("⏱️ Auto sync: MySQL → Sheets");
-    } catch (err) {
-        console.error(err.message);
-    }
-});
+// cron.schedule("*/20 * * * * *", async () => {
+//     try {
+//         await mysqlToSheetsSync();
+//         console.log("⏱️ Auto sync: MySQL → Sheets");
+//     } catch (err) {
+//         console.error(err.message);
+//     }
+// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
