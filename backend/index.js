@@ -10,7 +10,9 @@ const mysqlToSheetsSync = require("./mysqlToSheets"); // MySQL → Sheets
 const { sheets, SHEET_ID } = require("./sheets");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: 'https://google-sheets-mysql-sync.vercel.app'
+}));
 app.use(express.json());
 
 /**
